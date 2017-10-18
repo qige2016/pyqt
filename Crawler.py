@@ -7,9 +7,11 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QIcon
 import requests
 import json
 import re
+import icon
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -59,11 +61,10 @@ class Ui_MainWindow(object):
         self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_3.setGeometry(QtCore.QRect(20, 230, 140, 50))
         self.pushButton_3.setObjectName("pushButton_3")
+
         self.pushButton.clicked.connect(self.clickedEvent)
-        self.url1 = 'http://www.jiuye.org/new/sys/fore.php?op=listRecruit'
         self.pushButton_2.clicked.connect(self.clickedEvent_2)
         self.pushButton_3.clicked.connect(self.clickedEvent_3)
-
 
         self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
         # self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -89,37 +90,40 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "招聘网爬虫"))
+        MainWindow.setWindowIcon(QIcon(':ico/image.ico'))
         self.pushButton_3.setText(_translate("MainWindow", "智联招聘"))
         self.label.setText(_translate("MainWindow", "工作地点"))
         self.label_2.setText(_translate("MainWindow", "职位名称"))
         self.label_3.setText(_translate("MainWindow", "发布时间"))
         self.pushButton.setText(_translate("MainWindow", "电子科大就业网"))
         self.pushButton_2.setText(_translate("MainWindow", "前程无忧"))
+
     def clickedEvent(self):
         self.tableWidget.clearContents()
-        self.find(url=self.url1)
+        self.find()
     def clickedEvent_2(self):
         self.tableWidget.clearContents()
         self.find_2()
     def clickedEvent_3(self):
         self.tableWidget.clearContents()
         self.find_3()
-    def find(self, url):
+    def find(self):
+        url = 'http://www.jiuye.org/new/sys/fore.php?op=listRecruit'
         RowCount = self.tableWidget.rowCount()
         count = 0
         for i in range(1, 50):
             data = {
                 'page': str(i),
                 'rec_way': '1',
-                    }
-    # 使用requests发送post请求
+            }
+            # 使用requests发送post请求
             resp = requests.post(url, data=data).text
             info = json.loads(resp)
-    # 正则匹配工作地点
+            # 正则匹配工作地点
             pattern1 = re.compile(r'(?:%s)' % (self.comboBox.currentText()))
-    # 正则匹配职位名称
+            # 正则匹配职位名称
             pattern2 = re.compile(r'(?:%s)' % (self.lineEdit.text()), re.IGNORECASE)
-    # 正则匹配发布时间
+            # 正则匹配发布时间
             pattern3 = re.compile(r'(?:%s)' % (self.comboBox_2.currentText()))
             for item, row in zip(info['data'], range(0 + count, RowCount - 1)):
                 result1 = re.search(pattern1, item['rec_work_place'])
@@ -133,23 +137,29 @@ class Ui_MainWindow(object):
                     self.tableWidget.setItem(row, 4, QtWidgets.QTableWidgetItem(item['rec_publish_time']))
                     count += 1
             RowCount += 20
-
     def find_2(self):
         def get_content(page):
             if self.comboBox.currentText() == '成都':
                 jobarea = '090200'
-            else:jobarea = '000000'
+            else:
+                jobarea = '000000'
             if self.lineEdit.text() == '':
                 keyword = ' '
-            else: keyword = self.lineEdit.text()
-            url = 'http://search.51job.com/list/'+jobarea+',000000,0000,00,9,99,'+keyword+',2,' + str(page)+'.html'
+            else:
+                keyword = self.lineEdit.text()
+            url = 'http://search.51job.com/list/' + jobarea + ',000000,0000,00,9,99,' + keyword + ',2,' + str(
+                page) + '.html'
             a = requests.get(url).content
             html = a.decode('gbk')
             return html
+
         def parse_html(html):
-            reg = re.compile(r'class="t1 ">.*? <a target="_blank" title="(.*?)".*?<span class="t2"><a target="_blank" title="(.*?)".*?<span class="t3">(.*?)</span>.*?<span class="t4">(.*?)</span>.*? <span class="t5">(.*?)</span>',re.S)  # 匹配换行符
+            reg = re.compile(
+                r'class="t1 ">.*? <a target="_blank" title="(.*?)".*?<span class="t2"><a target="_blank" title="(.*?)".*?<span class="t3">(.*?)</span>.*?<span class="t4">(.*?)</span>.*? <span class="t5">(.*?)</span>',
+                re.S)  # 匹配换行符
             items = re.findall(reg, html)
             return items
+
         RowCount = self.tableWidget.rowCount()
         count = 0
         for i in range(1, 50):
@@ -162,12 +172,15 @@ class Ui_MainWindow(object):
                 self.tableWidget.setItem(row, 4, QtWidgets.QTableWidgetItem(item[4]))
                 count += 1
             RowCount += 50
+
     def find_3(self):
         def get_content(page):
             if self.lineEdit.text() == '':
                 keyword = ' '
-            else: keyword = self.lineEdit.text()
-            url = 'http://sou.zhaopin.com/jobs/searchresult.ashx?jl='+self.comboBox.currentText()+'&kw='+keyword+'&p=' + str(page) + '&kt=3'
+            else:
+                keyword = self.lineEdit.text()
+            url = 'http://sou.zhaopin.com/jobs/searchresult.ashx?jl=' + self.comboBox.currentText() + '&kw=' + keyword + '&p=' + str(
+                page) + '&kt=3'
             a = requests.get(url, headers={
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0'
             }).content
@@ -186,6 +199,7 @@ class Ui_MainWindow(object):
                 rs_tp = (name, rs[1], rs[2], rs[3], rs[4])
                 rs_data.append(rs_tp)
             return rs_data
+
         RowCount = self.tableWidget.rowCount()
         count = 0
         for i in range(1, 50):
@@ -198,4 +212,7 @@ class Ui_MainWindow(object):
                 self.tableWidget.setItem(row, 4, QtWidgets.QTableWidgetItem(item[4]))
                 count += 1
             RowCount += 60
+
+
+
 
