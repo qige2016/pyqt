@@ -30,14 +30,14 @@ class Ui_MainWindow(object):
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setGeometry(QtCore.QRect(600, 20, 200, 30))
         self.comboBox.setObjectName("comboBox")
-        self.work_place = ["四川-成都|全国-所有省市", ""]
+        self.work_place = ["成都", "全国"]
         for index in range(len(self.work_place)):
             self.comboBox.insertItem(index, self.work_place[index])
 
         self.comboBox_2 = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox_2.setGeometry(QtCore.QRect(100, 20, 100, 30))
         self.comboBox_2.setObjectName("comboBox")
-        self.publish_time = ["2017", "2016", "2015", ""]
+        self.publish_time = ["2017"]
         for index in range(len(self.publish_time)):
             self.comboBox_2.insertItem(index, self.publish_time[index])
 
@@ -59,12 +59,11 @@ class Ui_MainWindow(object):
         self.pushButton_3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_3.setGeometry(QtCore.QRect(20, 230, 140, 50))
         self.pushButton_3.setObjectName("pushButton_3")
-        self.pushButton_4 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_4.setGeometry(QtCore.QRect(20, 310, 140, 50))
-        self.pushButton_4.setObjectName("pushButton_4")
-
         self.pushButton.clicked.connect(self.clickedEvent)
         self.url1 = 'http://www.jiuye.org/new/sys/fore.php?op=listRecruit'
+        self.pushButton_2.clicked.connect(self.clickedEvent_2)
+        self.pushButton_3.clicked.connect(self.clickedEvent_3)
+
 
         self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
         # self.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
@@ -96,10 +95,15 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "发布时间"))
         self.pushButton.setText(_translate("MainWindow", "电子科大就业网"))
         self.pushButton_2.setText(_translate("MainWindow", "前程无忧"))
-        self.pushButton_4.setText(_translate("MainWindow", "拉勾网"))
     def clickedEvent(self):
         self.tableWidget.clearContents()
         self.find(url=self.url1)
+    def clickedEvent_2(self):
+        self.tableWidget.clearContents()
+        self.find_2()
+    def clickedEvent_3(self):
+        self.tableWidget.clearContents()
+        self.find_3()
     def find(self, url):
         RowCount = self.tableWidget.rowCount()
         count = 0
@@ -130,5 +134,68 @@ class Ui_MainWindow(object):
                     count += 1
             RowCount += 20
 
+    def find_2(self):
+        def get_content(page):
+            if self.comboBox.currentText() == '成都':
+                jobarea = '090200'
+            else:jobarea = '000000'
+            if self.lineEdit.text() == '':
+                keyword = ' '
+            else: keyword = self.lineEdit.text()
+            url = 'http://search.51job.com/list/'+jobarea+',000000,0000,00,9,99,'+keyword+',2,' + str(page)+'.html'
+            a = requests.get(url).content
+            html = a.decode('gbk')
+            return html
+        def parse_html(html):
+            reg = re.compile(r'class="t1 ">.*? <a target="_blank" title="(.*?)".*?<span class="t2"><a target="_blank" title="(.*?)".*?<span class="t3">(.*?)</span>.*?<span class="t4">(.*?)</span>.*? <span class="t5">(.*?)</span>',re.S)  # 匹配换行符
+            items = re.findall(reg, html)
+            return items
+        RowCount = self.tableWidget.rowCount()
+        count = 0
+        for i in range(1, 50):
+            html = get_content(i)
+            items = parse_html(html)
+            for item, row in zip(items, range(0 + count, RowCount - 1)):
+                self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(item[2]))
+                self.tableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(item[0]))
+                self.tableWidget.setItem(row, 3, QtWidgets.QTableWidgetItem(item[1]))
+                self.tableWidget.setItem(row, 4, QtWidgets.QTableWidgetItem(item[4]))
+                count += 1
+            RowCount += 50
+    def find_3(self):
+        def get_content(page):
+            if self.lineEdit.text() == '':
+                keyword = ' '
+            else: keyword = self.lineEdit.text()
+            url = 'http://sou.zhaopin.com/jobs/searchresult.ashx?jl='+self.comboBox.currentText()+'&kw='+keyword+'&p=' + str(page) + '&kt=3'
+            a = requests.get(url, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:56.0) Gecko/20100101 Firefox/56.0'
+            }).content
+            html = a.decode('utf8')
+            return html
 
+        def parse_html(html):
+            reg = re.compile(
+                r'<td class="zwmc.*?<a.*?>(.*?)</a>.*?<td class="gsmc.*?_blank">(.*?)</a>.*?<td class="zwyx">(.*?)</td.*?<td class="gzdd">(.*?)</td.*?<td class="gxsj"><span>(.*?)</span>',
+                re.S)  # 匹配换行符
+            results = re.findall(reg, html)
+            rs_data = []
+            for rs in results:
+                remove_b = re.compile(r'<.*?>', re.S)
+                name = re.sub(remove_b, '', rs[0])
+                rs_tp = (name, rs[1], rs[2], rs[3], rs[4])
+                rs_data.append(rs_tp)
+            return rs_data
+        RowCount = self.tableWidget.rowCount()
+        count = 0
+        for i in range(1, 50):
+            html = get_content(i)
+            items = parse_html(html)
+            for item, row in zip(items, range(0 + count, RowCount - 1)):
+                self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(item[3]))
+                self.tableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(item[0]))
+                self.tableWidget.setItem(row, 3, QtWidgets.QTableWidgetItem(item[1]))
+                self.tableWidget.setItem(row, 4, QtWidgets.QTableWidgetItem(item[4]))
+                count += 1
+            RowCount += 60
 
