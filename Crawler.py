@@ -78,7 +78,7 @@ class Ui_MainWindow(object):
         self.tableWidget.setColumnWidth(1, 150)
         self.tableWidget.setColumnWidth(2, 550)
         self.tableWidget.setColumnWidth(3, 250)
-        self.tableWidget.setHorizontalHeaderLabels(['序号', '工作地点', '职位名称', '公司名称', '发布日期'])
+        self.tableWidget.setHorizontalHeaderLabels(['序号', '工作地点', '职位名称', '公司名称', '招聘日期'])
 
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -94,7 +94,7 @@ class Ui_MainWindow(object):
         self.pushButton_3.setText(_translate("MainWindow", "智联招聘"))
         self.label.setText(_translate("MainWindow", "工作地点"))
         self.label_2.setText(_translate("MainWindow", "职位名称"))
-        self.label_3.setText(_translate("MainWindow", "发布时间"))
+        self.label_3.setText(_translate("MainWindow", "发布日期"))
         self.pushButton.setText(_translate("MainWindow", "电子科大就业网"))
         self.pushButton_2.setText(_translate("MainWindow", "前程无忧"))
 
@@ -116,25 +116,25 @@ class Ui_MainWindow(object):
                 'page': str(i),
                 'rec_way': '1',
             }
-            # 使用requests发送post请求
+        # 使用requests发送post请求
             resp = requests.post(url, data=data).text
             info = json.loads(resp)
-            # 正则匹配工作地点
+        # 正则匹配工作地点
             pattern1 = re.compile(r'(?:%s)' % (self.comboBox.currentText()))
-            # 正则匹配职位名称
+        # 正则匹配职位名称
             pattern2 = re.compile(r'(?:%s)' % (self.lineEdit.text()), re.IGNORECASE)
-            # 正则匹配发布时间
+        # 正则匹配发布时间
             pattern3 = re.compile(r'(?:%s)' % (self.comboBox_2.currentText()))
             for item, row in zip(info['data'], range(0 + count, RowCount - 1)):
                 result1 = re.search(pattern1, item['rec_work_place'])
                 result2 = re.search(pattern2, item['rec_title'])
-                result3 = re.match(pattern3, item['rec_publish_time'])
+                result3 = re.match(pattern3, item['rec_time'])
                 if result1 and result2 and result3:
                     self.tableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(item['rec_No']))
                     self.tableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(item['rec_work_place']))
                     self.tableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(item['rec_title']))
                     self.tableWidget.setItem(row, 3, QtWidgets.QTableWidgetItem(item['rec_enter_name']))
-                    self.tableWidget.setItem(row, 4, QtWidgets.QTableWidgetItem(item['rec_publish_time']))
+                    self.tableWidget.setItem(row, 4, QtWidgets.QTableWidgetItem(item['rec_time']))
                     count += 1
             RowCount += 20
     def find_2(self):
@@ -212,7 +212,3 @@ class Ui_MainWindow(object):
                 self.tableWidget.setItem(row, 4, QtWidgets.QTableWidgetItem(item[4]))
                 count += 1
             RowCount += 60
-
-
-
-
